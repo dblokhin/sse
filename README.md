@@ -41,4 +41,4 @@ Any invalid SSE line sequence is returned as an error (`ErrInvalidSequence`) wit
 ---
 
 ## License
-MIT License# sse
+MIT License
