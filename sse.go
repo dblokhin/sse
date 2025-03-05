@@ -47,13 +47,12 @@ func Read(input io.Reader) func(yield func(Event, error) bool) {
 				continue
 			}
 
-			if payload[0] == ':' {
+			// parse line
+			del := bytes.IndexByte(payload, ':')
+			if del == 0 {
 				continue // skip comment
 			}
-
-			// parse line
-			parts := bytes.SplitN(payload, splitField, 2)
-			if len(parts) < 2 {
+			if del < 0 {
 				err := fmt.Errorf("%w: %q", ErrInvalidSequence, string(payload))
 				if !yield(Event{}, err) {
 					return
@@ -61,11 +60,7 @@ func Read(input io.Reader) func(yield func(Event, error) bool) {
 				continue // skip invalid sequence
 			}
 
-			field, content := parts[0], bytes.TrimSpace(parts[1])
-			if len(field)*len(content) == 0 {
-				// skip empty field/content
-				continue
-			}
+			field, content := payload[:del], bytes.TrimSpace(payload[del+1:])
 
 			// update fields
 			updated = true
@@ -75,7 +70,9 @@ func Read(input io.Reader) func(yield func(Event, error) bool) {
 			case bytes.EqualFold(field, eventField):
 				event.Event = content
 			case bytes.EqualFold(field, dataField):
-				if len(event.Data) > 0 {
+				if event.Data == nil {
+					event.Data = make([]byte, 0)
+				} else {
 					event.Data = append(event.Data, '\n')
 				}
 				event.Data = append(event.Data, content...)

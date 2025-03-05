@@ -35,8 +35,41 @@ func TestRead(t *testing.T) {
 			},
 		},
 		{
+			name:  "Multiple data lines 2",
+			input: "data:\ndata:\ndata: x\n",
+			want: []result{
+				{ev: Event{Data: []byte("\n\nx")}},
+			},
+		},
+		{
+			name:  "Multiple data lines 3",
+			input: "data:\ndata:\ndata: x\ndata:\ndata:\n\n",
+			want: []result{
+				{ev: Event{Data: []byte("\n\nx\n\n")}},
+			},
+		},
+		{
+			name:  "Empty line",
+			input: "\n\ndata:xxx\n",
+			want: []result{
+				{ev: Event{Data: []byte("xxx")}},
+			},
+		},
+		{
 			name:  "Multiple fields",
 			input: "id: 1\nevent: message\ndata: hello\nretry: 5000\n\n",
+			want: []result{
+				{ev: Event{
+					ID:    []byte("1"),
+					Event: []byte("message"),
+					Data:  []byte("hello"),
+					Retry: []byte("5000"),
+				}},
+			},
+		},
+		{
+			name:  "Case insensitive",
+			input: "Id: 1\nEveNt: message\nDAta: hello\nReTry: 5000\n\n",
 			want: []result{
 				{ev: Event{
 					ID:    []byte("1"),
@@ -62,6 +95,15 @@ func TestRead(t *testing.T) {
 				},
 				{
 					ev: Event{Data: []byte("hello")},
+				},
+			},
+		},
+		{
+			name:  "Invalid sequence 2",
+			input: "invalid\n",
+			want: []result{
+				{
+					err: fmt.Errorf("%w: %q", ErrInvalidSequence, "invalid"),
 				},
 			},
 		},
