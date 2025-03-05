@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"iter"
 )
 
 // Event is message unit in SSE
@@ -28,7 +29,7 @@ var (
 
 // Read returns iterator over streaming in input reader.
 // It automatically skips comments. Returns ErrInvalidSequence with the problem line if got invalid line sequence.
-func Read(input io.Reader) func(yield func(Event, error) bool) {
+func Read(input io.Reader) iter.Seq2[Event, error] {
 	return func(yield func(Event, error) bool) {
 		scan := bufio.NewScanner(input)
 		event := Event{}
